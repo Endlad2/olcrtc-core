@@ -51,6 +51,7 @@ jobs:
         run: go build -trimpath -ldflags "-s -w" -o olcrtc ./cmd/...
 
       - name: Package
+        shell: bash
         run: |
           tar czf ${{ matrix.archive }}.tar.gz olcrtc
           sha256sum ${{ matrix.archive }}.tar.gz > ${{ matrix.archive }}.tar.gz.sha256
@@ -68,10 +69,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # gomobile valid Android targets: arm, arm64, 386, amd64.
-        # armv7 (arm) fails to link due to github.com/wlynxg/anet referencing net.zoneCache,
-        # so we ship arm64 + amd64 (emulator) only.
+        # gomobile valid Android targets: arm (armv7), arm64, 386, amd64.
+        # The armv7 build previously failed with
+        #   link: github.com/wlynxg/anet: invalid reference to net.zoneCache
+        # which is the Go 1.23+ linkname check. We disable it with
+        #   -ldflags=-checklinkname=0
+        # so armv7 links again.
         include:
+          - target: arm
+            archive: olcrtc-android-armv7
           - target: arm64
             archive: olcrtc-android-arm64
           - target: amd64
@@ -96,11 +102,17 @@ jobs:
           gomobile init
 
       - name: Build AAR
+        shell: bash
         run: |
           mkdir -p dist
-          gomobile bind -target=android/${{ matrix.target }} -androidapi 21 -o dist/olcrtc.aar ./mobile
+          gomobile bind \
+            -target=android/${{ matrix.target }} \
+            -androidapi 21 \
+            -ldflags="-checklinkname=0" \
+            -o dist/olcrtc.aar ./mobile
 
       - name: Package
+        shell: bash
         run: |
           cd dist && zip -r ../${{ matrix.archive }}.zip . && cd -
           sha256sum ${{ matrix.archive }}.zip > ${{ matrix.archive }}.zip.sha256
@@ -130,9 +142,10 @@ jobs:
           gomobile init
 
       - name: Build XCFramework
+        shell: bash
         run: |
           mkdir -p dist
-          gomobile bind -target=ios -o dist/OlcRTC.xcframework ./mobile
+          gomobile bind -target=ios -ldflags="-checklinkname=0" -o dist/OlcRTC.xcframework ./mobile
           cd dist && zip -r ../olcrtc-ios.xcframework.zip OlcRTC.xcframework && cd -
           shasum -a 256 olcrtc-ios.xcframework.zip > olcrtc-ios.xcframework.zip.sha256
 
