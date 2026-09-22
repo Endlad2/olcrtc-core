@@ -68,13 +68,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # gomobile valid Android targets: arm, arm64, 386, amd64.
+        # armv7 (arm) fails to link due to github.com/wlynxg/anet referencing net.zoneCache,
+        # so we ship arm64 + amd64 (emulator) only.
         include:
-          - target: aarch64
+          - target: arm64
             archive: olcrtc-android-arm64
-          - target: arm
-            archive: olcrtc-android-armv7
-          - target: x86_64
-            archive: olcrtc-android-x86_64
+          - target: amd64
+            archive: olcrtc-android-amd64
     steps:
       - uses: actions/checkout@v4
 
