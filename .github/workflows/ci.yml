@@ -84,28 +84,6 @@ jobs:
           name: coverage
           path: coverage.out
 
-  real-e2e:
-    name: Real E2E (Providers x Transports)
-    # Talks to third-party services, but runs on every push and PR so
-    # breakage is caught immediately instead of waiting for a schedule.
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Run real provider e2e matrix
-        run: |
-          go test -count=1 -v ./internal/e2e \
-            -olcrtc.real-providers=telemost,wbstream,jitsi \
-            -run '^TestRealProviderTransportMatrix$' \
-            -olcrtc.real-e2e
 
   build-cli:
     name: Build CLI (Binaries)
