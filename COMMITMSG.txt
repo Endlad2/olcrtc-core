@@ -1,0 +1,1 @@
+ci: add release workflow building desktop binaries, Android AAR and iOS XCFramework for all platforms
